@@ -1,0 +1,184 @@
+from collections import deque
+import heapq
+
+# --------------------------------------------------
+# Graph
+# --------------------------------------------------
+
+graph = {
+    "A": ["B", "C"],
+    "B": ["D", "E"],
+    "C": ["F", "G"],
+    "D": ["H"],
+    "E": ["H"],
+    "F": ["I"],
+    "G": ["J"],
+    "H": ["K"],
+    "I": ["K"],
+    "J": ["K"],
+    "K": ["L"],
+    "L": []
+}
+
+
+# --------------------------------------------------
+# 1. Breadth First Search (BFS)
+# --------------------------------------------------
+
+def bfs(graph, start, goal):
+    queue = deque([(start, [start])])
+    visited = set()
+
+    while queue:
+        current, path = queue.popleft()
+
+        if current == goal:
+            return path
+
+        if current not in visited:
+            visited.add(current)
+
+            for neighbor in graph[current]:
+                if neighbor not in visited:
+                    queue.append((neighbor, path + [neighbor]))
+
+    return None
+
+
+# --------------------------------------------------
+# 2. Uniform Cost Search (UCS)
+# --------------------------------------------------
+
+# Different costs are assigned to each path
+cost = {
+    ("A", "B"): 2,
+    ("A", "C"): 4,
+
+    ("B", "D"): 3,
+    ("B", "E"): 1,
+
+    ("C", "F"): 2,
+    ("C", "G"): 5,
+
+    ("D", "H"): 2,
+    ("E", "H"): 4,
+
+    ("F", "I"): 3,
+    ("G", "J"): 1,
+
+    ("H", "K"): 2,
+    ("I", "K"): 2,
+    ("J", "K"): 3,
+
+    ("K", "L"): 1
+}
+
+
+def ucs(graph, cost, start, goal):
+    priority_queue = [(0, start, [start])]
+    visited = set()
+
+    while priority_queue:
+        current_cost, current, path = heapq.heappop(priority_queue)
+
+        if current == goal:
+            return path, current_cost
+
+        if current not in visited:
+            visited.add(current)
+
+            for neighbor in graph[current]:
+                if neighbor not in visited:
+                    new_cost = current_cost + cost[(current, neighbor)]
+                    heapq.heappush(
+                        priority_queue,
+                        (new_cost, neighbor, path + [neighbor])
+                    )
+
+    return None, None
+
+
+# --------------------------------------------------
+# 3. Iterative Deepening Search (IDS)
+# --------------------------------------------------
+
+def depth_limited_search(graph, current, goal, depth, path):
+
+    if current == goal:
+        return path
+
+    if depth == 0:
+        return None
+
+    for neighbor in graph[current]:
+
+        if neighbor not in path:
+            result = depth_limited_search(
+                graph,
+                neighbor,
+                goal,
+                depth - 1,
+                path + [neighbor]
+            )
+
+            if result is not None:
+                return result
+
+    return None
+
+
+def ids(graph, start, goal, max_depth):
+
+    for depth in range(max_depth + 1):
+
+        result = depth_limited_search(
+            graph,
+            start,
+            goal,
+            depth,
+            [start]
+        )
+
+        if result is not None:
+            return result, depth
+
+    return None, None
+
+
+# --------------------------------------------------
+# Main Program
+# --------------------------------------------------
+
+start = "A"
+goal = "L"
+
+print("======================================")
+print("   EMERGENCY RESCUE ROUTE PLANNER")
+print("======================================")
+
+print("\nStart Location :", start)
+print("Patient Location:", goal)
+
+
+# BFS
+bfs_path = bfs(graph, start, goal)
+
+print("\n1. BREADTH FIRST SEARCH (BFS)")
+print("Path:", " -> ".join(bfs_path))
+print("Number of steps:", len(bfs_path) - 1)
+
+
+# UCS
+ucs_path, total_cost = ucs(graph, cost, start, goal)
+
+print("\n2. UNIFORM COST SEARCH (UCS)")
+print("Path:", " -> ".join(ucs_path))
+print("Minimum Cost:", total_cost)
+
+
+# IDS
+ids_path, depth = ids(graph, start, goal, 10)
+
+print("\n3. ITERATIVE DEEPENING SEARCH (IDS)")
+print("Path:", " -> ".join(ids_path))
+print("Depth:", depth)
